@@ -1,0 +1,25 @@
+# build output
+/target/
+
+# IDEs and editors
+.idea
+.vscode
+.project
+.buildpath
+.classpath
+*.iml
+*.launch
+.settings/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# environment
+.env
+.env.backup
+.env.production
+
+# runtime data (downloaded bot lists; directory kept via .gitkeep)
+/botlists/*
+!/botlists/.gitkeep

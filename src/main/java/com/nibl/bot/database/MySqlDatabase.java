@@ -31,7 +31,7 @@ public class MySqlDatabase extends BotExtend implements Database {
             // Class.forName("com.mysql.jdbc.Driver").newInstance();
             // String url = "jdbc:mysql://"+_server +":"+_port+"/"+_dbName+"?useUnicode=yes&characterEncoding=UTF-8";
             String url = "jdbc:mysql://" + _server + ":" + _port + "/" + _dbName
-                    + "?useUnicode=yes&characterEncoding=utf-8&useServerPrepStmts=true&useServerPrepStmts=true";
+                    + "?useUnicode=yes&characterEncoding=utf-8&useServerPrepStmts=true&useSSL=false&allowPublicKeyRetrieval=true";
             _connection = DriverManager.getConnection(url, _userName, _userPass);
             _myBot.getLogger().info("Database connection established");
         } catch (Exception e) {

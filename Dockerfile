@@ -1,9 +1,24 @@
-FROM maven:3.5-jdk-8 AS build  
-COPY src /usr/src/app/src  
-COPY pom.xml /usr/src/app  
-RUN mvn -f /usr/src/app/pom.xml clean package
+# syntax=docker/dockerfile:1
 
-FROM gcr.io/distroless/java  
-COPY --from=build /usr/src/app/target/ircBot-jar-with-dependencies.jar /usr/app/ircBot-jar-with-dependencies.jar
+###############################################################################
+# build: compile the fat jar with Maven inside the image
+###############################################################################
+FROM maven:3.9-eclipse-temurin-21 AS build
 
-ENTRYPOINT ["java","-jar","/usr/app/ircBot-jar-with-dependencies.jar","/config/config.txt"]
+WORKDIR /usr/src/app
+
+# Dependency manifest first, so this layer is cached until pom.xml changes
+COPY pom.xml ./
+RUN mvn -B dependency:go-offline
+
+COPY src ./src
+RUN mvn -B clean package
+
+###############################################################################
+# final: distroless runtime image
+###############################################################################
+FROM gcr.io/distroless/java21-debian12
+
+COPY --from=build /usr/src/app/target/niblirc-jar-with-dependencies.jar /usr/app/niblirc-jar-with-dependencies.jar
+
+ENTRYPOINT ["java","-jar","/usr/app/niblirc-jar-with-dependencies.jar","/config/config.txt"]

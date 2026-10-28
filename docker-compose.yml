@@ -1,0 +1,33 @@
+name: niblirc
+
+services:
+  ooinuza:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ooinuza
+    container_name: ooinuza
+    user: "0"
+    extra_hosts:
+      - "public_dcc_ip:${PUBLIC_DCC_IP:?Set PUBLIC_DCC_IP in .env}"
+    environment:
+      DB_USER: ${MYSQL_BOT_USER:?Set MYSQL_BOT_USER in .env}
+      DB_PASS: ${MYSQL_BOT_PASSWORD:?Set MYSQL_BOT_PASSWORD in .env}
+    ports:
+      - "46571:46571"
+      - "46572:46572"
+      - "46573:46573"
+    volumes:
+      - ./config:/config
+      - ./botlists:/data/botlists
+    logging:
+      driver: json-file
+      options:
+        max-size: "250m"
+        max-file: "3"
+    networks:
+      - my-bridge
+
+networks:
+  my-bridge:
+    external: true

@@ -9,8 +9,6 @@ import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
-
 import org.pircbotx.Colors;
 import org.pircbotx.dcc.SendChat;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -280,7 +278,8 @@ public class UpdatePackListDAO extends DataAccessObject {
 		
 		for(int i=0; i<listSize; i++) {
 			Pack pack = bot.getListing().get(i);
-			sb.append("(" + pack.getBotId() + "," + pack.getNumber() + ",'" + pack.getName().replaceAll("'", Matcher.quoteReplacement("\\'")) + "','" + pack.getSize() + "','" + pack.getSizeKBits() + "','" + pack.getEpisodeNumber() + "','" + pack.getLastModified() + "')");
+			// '' (doubled quote) is the portable SQL escape: valid in MySQL and H2, unlike \'
+			sb.append("(" + pack.getBotId() + "," + pack.getNumber() + ",'" + pack.getName().replace("'", "''") + "','" + pack.getSize() + "','" + pack.getSizeKBits() + "','" + pack.getEpisodeNumber() + "','" + pack.getLastModified() + "')");
 			counter++;
 			
 			if(counter>1000){

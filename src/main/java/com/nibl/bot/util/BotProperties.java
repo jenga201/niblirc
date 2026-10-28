@@ -22,6 +22,21 @@ public class BotProperties extends Properties {
 		_myBot = myBot;
 		this.configFile = configFile;
 		loadConfiguration();
+		applyEnvOverrides();
+	}
+
+	/**
+	 * Environment variables override file properties: property key "db_pass"
+	 * is overridden by env var "DB_PASS" when present. Values are never logged.
+	 */
+	private void applyEnvOverrides() {
+		for (String key : new java.util.ArrayList<>(stringPropertyNames())) {
+			String env = System.getenv(key.toUpperCase());
+			if (env != null) {
+				setProperty(key, env);
+				_myBot.getLogger().info("Property " + key + " overridden from environment variable " + key.toUpperCase());
+			}
+		}
 	}
 	
 	public void loadConfiguration() {

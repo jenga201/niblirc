@@ -10,7 +10,7 @@ port = 9999
 #ssl true/false (make sure port is good)
 ssl = true
 #channels to join no # space separated :passwords
-channels = frog
+channels = nibl
 admin_channel = frog
 #name before the @
 login = bot
@@ -25,7 +25,7 @@ verbose = false
 #changes nick if already used
 auto_nick_change = true
 # Referenced by Docker --add-host
-public_ip = public_dcc_ip
+public_ip = 47.199.82.19
 dcc_ports = 46571,46572,46573
 
 ###BOT###
@@ -40,18 +40,18 @@ bot_conc_admin = 3
 
 ###Commands### getName() = enabled/disabled (only need the string returned by getName())
 anidb = disabled
-help = enabled
-request = enabled
-money = enabled
-search = enabled
-latest = enabled
-nibl++ = enabled
-rules = enabled
-dildo = enabled
-roulette = enabled
+help = disabled
+request = disabled
+money = disabled
+search = disabled
+latest = disabled
+nibl++ = disabled
+rules = disabled
+dildo = disabled
+roulette = disabled
 
 ###Services### getName() = start/stop
-packlist = start
+packlist = stop
 update_pack_list_time = 1800
 connection = start
 reconnect_check_time = 60
@@ -67,9 +67,10 @@ db = mysql
 # user for database
 db_user = ooinuza
 # password for database
-db_pass = niblempire
+db_pass = CHANGE_ME
 # server
 db_server = niblmysql
+#db_server = 127.0.0.1
 # port
 db_port = 3306
 # name of database
