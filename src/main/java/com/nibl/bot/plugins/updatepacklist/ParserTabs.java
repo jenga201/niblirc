@@ -27,8 +27,8 @@ public class ParserTabs extends AbstractParser {
 		in.seek(0);
 		
 		String line = "";
-		while ( (line = in.readLine()) != null ) {
-			line = line.replaceAll("\t", " ");
+		while ( (line = PackParseFunctions.readUtf8Line(in)) != null ) {
+			line = line.replace('\t', ' ');
 			if (line.trim().startsWith("#")) {
 			    try {
     			    // Parse out the pack number

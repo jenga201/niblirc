@@ -20,18 +20,18 @@ public class ParserDinoex extends AbstractParser {
 		in.seek(0);
 		
 		String text;
-		while((text = in.readLine()) !=null){
+		while((text = PackParseFunctions.readUtf8Line(in)) !=null){
 			if(text.startsWith("<td class")){
 				StringBuilder items = new StringBuilder();
 				String number = removeBrackets(text);
-				in.readLine();//get rid of the 'Gets'
-				String size = removeBrackets(in.readLine());
-			herroloop: while((text = in.readLine()) != null){
+				PackParseFunctions.readUtf8Line(in);//get rid of the 'Gets'
+				String size = removeBrackets(PackParseFunctions.readUtf8Line(in));
+			herroloop: while((text = PackParseFunctions.readUtf8Line(in)) != null){
 					if(text.equals("</tr>"))
 						break;
 					if(text.contains("class=\"content\""))
 						items.append("<"); //prepare to for stripping
-						while((text = in.readLine()) != null){
+						while((text = PackParseFunctions.readUtf8Line(in)) != null){
 							if(text.contains("</span>") || text.contains("</td>")){
 								items.append(text);
 								break herroloop;

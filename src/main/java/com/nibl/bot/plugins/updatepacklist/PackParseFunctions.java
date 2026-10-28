@@ -1,6 +1,9 @@
 package com.nibl.bot.plugins.updatepacklist;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +31,7 @@ public class PackParseFunctions extends BotExtend {
 		}
 		public SizeMult getSizeMultByText(String text){
 			for( SizeMult sizeMult : SizeMult.values() ) {
-				if( sizeMult.text.toLowerCase().equals(text.toLowerCase()) ){
+				if( sizeMult.text.equalsIgnoreCase(text) ){
 					return sizeMult;
 				}
 			}
@@ -64,6 +67,29 @@ public class PackParseFunctions extends BotExtend {
 	public static final int PARSER_DINOEX_ID = 2;
 	public static final int PARSER_JS_ID = 3;
 	public static final int PARSER_TABS_ID = 4;
+
+	/**
+	 * Reads a line the same way {@link RandomAccessFile#readLine()} does, but
+	 * decodes the bytes as UTF-8 instead of ISO-8859-1. Packlists are UTF-8,
+	 * so the stock readLine corrupts every non-ASCII filename.
+	 */
+	public static String readUtf8Line(RandomAccessFile in) throws IOException {
+			ByteArrayOutputStream lineBytes = new ByteArrayOutputStream();
+			int b = in.read();
+			while (b != -1 && b != '\n') {
+				if (b != '\r') {
+					lineBytes.write(b);
+					b = in.read();
+					continue;
+				}
+				long pos = in.getFilePointer();
+				if (in.read() != '\n') {
+					in.seek(pos);
+				}
+				break;
+			}
+			return (b == -1 && lineBytes.size() == 0) ? null : lineBytes.toString(StandardCharsets.UTF_8);
+		}
 	
 	public SearchDAO _searchDAO;
 	
@@ -78,9 +104,9 @@ public class PackParseFunctions extends BotExtend {
 		Long sizeKBits = 0L;
 		try{
 			packsize = packsize.trim();
-			String sizeDesc = packsize.substring(packsize.length() -1 , packsize.length());
+			String sizeDesc = packsize.substring(packsize.length() - 1);
 			SizeMult sizeMult = SizeMult.SIZE_NULL.getSizeMultByText(sizeDesc);
-			sizeKBits = (long) (Double.parseDouble(packsize.replace(sizeDesc, "").replaceAll("<", "")) * sizeMult.mul);
+			sizeKBits = (long) (Double.parseDouble(packsize.substring(0, packsize.length() - 1).replace("<", "")) * sizeMult.mul);
 		}catch(Exception e) {
 			_myBot.getLogger().error("Failed to calculate size with " + packsize, e);
 		}

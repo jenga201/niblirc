@@ -25,7 +25,7 @@ public class ParserJS extends AbstractParser {
 		in.seek(0);
 		
 		String line = "";
-		while ( (line = in.readLine()) != null ) {
+		while ( (line = PackParseFunctions.readUtf8Line(in)) != null ) {
 			Matcher matcher;
 			line = line.trim();
 

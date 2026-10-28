@@ -6,9 +6,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.pircbotx.Colors;
 import org.pircbotx.dcc.SendChat;
 import org.pircbotx.hooks.events.MessageEvent;
@@ -29,10 +31,10 @@ public class UpdatePackListDAO extends DataAccessObject {
 		super(myBot);
 	}
 
-	public void registerUpdatePackList(UpdatePackList updatePackList){
+	public void registerUpdatePackList(UpdatePackList updatePackList) {
 		_updatePackList = updatePackList;
 	}
-	
+
 	@Override
 	public void createTables() {
 		if (tablesDoesNotExist()) {
@@ -46,7 +48,7 @@ public class UpdatePackListDAO extends DataAccessObject {
 				_myBot.getLogger().info("created update pack list tables");
 				statement.close();
 			} catch (SQLException e) {
-				_myBot.getLogger().error("createTables",e);
+				_myBot.getLogger().error("createTables", e);
 			}
 		}
 	}
@@ -66,7 +68,7 @@ public class UpdatePackListDAO extends DataAccessObject {
 				_myBot.getLogger().info("deleted update pack list tables");
 				statement.close();
 			} catch (SQLException e) {
-				_myBot.getLogger().error("dropTables",e);
+				_myBot.getLogger().error("dropTables", e);
 			}
 		}
 	}
@@ -79,34 +81,31 @@ public class UpdatePackListDAO extends DataAccessObject {
 				AbstractDistroBot distroBot = buildDistroBot(rs);
 				_updatePackList.getBotsMap().put(distroBot.getId(), distroBot);
 				_updatePackList.getReverseBotsMap().put(distroBot.getName().toLowerCase(), distroBot.getId());
-				distroBot.setListing( getBotPackListFromDatabase(distroBot) );
+				distroBot.setListing(getBotPackListFromDatabase(distroBot));
 			}
 			rs.close();
 			stmt.close();
 		} catch (SQLException e) {
-			_myBot.getLogger().error("getBotsFromDatabaseCreateBots",e);
+			_myBot.getLogger().error("getBotsFromDatabaseCreateBots", e);
 		}
 	}
-	
-	public AbstractDistroBot getBotFromDatabase(String botName){
-		
+
+	public AbstractDistroBot getBotFromDatabase(String botName) {
 		try {
 			Statement stmt = getConnection().createStatement();
 			String query = "select * from " + _BOTS_TABLE + " where LOWER(`name`) = LOWER('" + botName + "')";
 			ResultSet rs = stmt.executeQuery(query);
-			
-			if( rs.next() ){
+
+			if (rs.next()) {
 				return buildDistroBot(rs);
 			}
-			
 		} catch (SQLException e) {
 			_myBot.getLogger().error("Error when getting bot " + this.getClass().getName(), e);
 		}
-		
+
 		return null;
-		
 	}
-	
+
 	private ResultSet getResultSetOfBotTable(Statement stmt) throws SQLException {
 		String query = "select * from " + _BOTS_TABLE + " order by `id`;";
 		ResultSet rs = stmt.executeQuery(query);
@@ -118,13 +117,13 @@ public class UpdatePackListDAO extends DataAccessObject {
 		String query = "update " + _BOTS_TABLE + " set status_id = " + bot.getStatusId() + " where id = " + bot.getId();
 		stmt.executeUpdate(query);
 	}
-	
+
 	public void setBotParser(AbstractDistroBot bot) throws SQLException {
 		Statement stmt = getConnection().createStatement();
 		String query = "update " + _BOTS_TABLE + " set parser_id = " + bot.getParserId() + " where id = " + bot.getId();
 		stmt.executeUpdate(query);
 	}
-	
+
 	public AbstractDistroBot buildDistroBot(ResultSet rs) throws SQLException {
 		int id = rs.getInt("id");
 		String name = rs.getString("name");
@@ -138,23 +137,24 @@ public class UpdatePackListDAO extends DataAccessObject {
 		String owner = rs.getString("owner");
 		int parserId = rs.getInt("parser_id");
 		LinkedList<Pack> listing = new LinkedList<Pack>();
-		return DistroBotFactory.create(_myBot, id, name, url, type, statusId, lastSeen, lastProcessed, listing, informative, external, owner,parserId);
+		return DistroBotFactory.create(_myBot, id, name, url, type, statusId, lastSeen, lastProcessed, listing, informative, external, owner, parserId);
 	}
-	
+
 	public AbstractDistroBot buildDistroBot(int id, String name, String url, String type, int statusId, Timestamp lastSeen, Timestamp lastProcessed, int informative, int external, String owner, int parserId) throws SQLException {
 		LinkedList<Pack> listing = new LinkedList<Pack>();
 		return DistroBotFactory.create(_myBot, id, name, url, type, statusId, lastSeen, lastProcessed, listing, informative, external, owner, parserId);
 	}
 
-	public List<Pack> getBotPackListFromDatabase(AbstractDistroBot bot){
+	public List<Pack> getBotPackListFromDatabase(AbstractDistroBot bot) {
 		LinkedList<Pack> listing = new LinkedList<Pack>();
 		try {
 			Statement stmt = getConnection().createStatement();
 			try {
-
 				ResultSet rs = stmt.executeQuery("SELECT * FROM updatepacklist_packs WHERE bot_id = " + bot.getId());
 				while (rs.next()) {
-					listing.add( new Pack(rs.getInt("bot_id"), rs.getInt("number"), bot.getName(), rs.getString("name"), rs.getString("size"), rs.getLong("sizekbits"), rs.getInt("episode_number"), rs.getTimestamp("last_modified")) );
+					Pack pack = new Pack(rs.getInt("bot_id"), rs.getInt("number"), bot.getName(), rs.getString("name"), rs.getString("size"), rs.getLong("sizekbits"), rs.getInt("episode_number"), rs.getTimestamp("last_modified"));
+					pack.setId(rs.getInt("id"));
+					listing.add(pack);
 				}
 				rs.close();
 				stmt.close();
@@ -166,14 +166,13 @@ public class UpdatePackListDAO extends DataAccessObject {
 		}
 		return listing;
 	}
-	
+
 	public List<AbstractDistroBot> getBotsInfo() {
 		List<AbstractDistroBot> result = new LinkedList<AbstractDistroBot>();
 
 		try {
 			Statement stmt = getConnection().createStatement();
 			try {
-
 				ResultSet rs = getResultSetOfBotTable(stmt);
 				while (rs.next()) {
 					AbstractDistroBot distroBot = buildDistroBot(rs);
@@ -202,146 +201,82 @@ public class UpdatePackListDAO extends DataAccessObject {
 			rs.close();
 			return result;
 		} catch (SQLException e) {
-			_myBot.getLogger().error("Error when getNoticeBots within " + this.getClass().getName(),e);
+			_myBot.getLogger().error("Error when getNoticeBots within " + this.getClass().getName(), e);
 		}
 		return new HashSet<String>();
 	}
 
+	/**
+	 * Persist a new pack listing using the smallest possible set of statements:
+	 * packs present only in the new listing are inserted, packs whose contents
+	 * changed are updated in place, and packs no longer present are deleted.
+	 * Unchanged packs are left untouched so their {@code last_modified} stays
+	 * stable (it drives the "latest packs" ordering).
+	 */
 	public void updateListing(AbstractDistroBot bot) {
-		PreparedStatement pstmt = null;
 		try {
-			pstmt = getConnection().prepareStatement("DELETE FROM " + _PACKS_TABLE + " WHERE bot_id=?;");
-			pstmt.setInt(1, bot.getId());
-			pstmt.execute();
-			pstmt.close();
-			
-			insertAndUpdateListFor(bot);
+			List<Pack> dbPacks = getBotPackListFromDatabase(bot);
 
-		} catch (SQLException e) {
-			_myBot.getLogger().error("UpdatePackListDAO BotName: " + bot.getName(),e);
-			for (Pack pack : bot.getListing()) {
-				_myBot.getLogger().error(pack.toString());
+			Map<Integer, Pack> oldByNumber = new HashMap<Integer, Pack>();
+			for (Pack old : dbPacks) {
+				oldByNumber.put(old.getNumber(), old);
 			}
+
+			HashSet<Integer> newNumbers = new HashSet<Integer>();
+			for (Pack pack : bot.getListing()) {
+				newNumbers.add(pack.getNumber());
+			}
+
+			String updateSql = "UPDATE " + _PACKS_TABLE + " SET name=?, size=?, sizekbits=?, episode_number=?, last_modified=? WHERE id=?";
+			String insertSql = "INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, sizekbits, episode_number, last_modified) VALUES (?,?,?,?,?,?,?)";
+			String deleteSql = "DELETE FROM " + _PACKS_TABLE + " WHERE id=?";
+
+			try (PreparedStatement update = getConnection().prepareStatement(updateSql);
+				 PreparedStatement insert = getConnection().prepareStatement(insertSql);
+				 PreparedStatement delete = getConnection().prepareStatement(deleteSql)) {
+
+				for (Pack pack : bot.getListing()) {
+					Pack old = oldByNumber.get(pack.getNumber());
+					if (old == null) {
+						insert.setInt(1, pack.getBotId());
+						insert.setInt(2, pack.getNumber());
+						insert.setString(3, pack.getName());
+						insert.setString(4, pack.getSize());
+						insert.setLong(5, pack.getSizeKBits());
+						insert.setInt(6, pack.getEpisodeNumber());
+						insert.setTimestamp(7, pack.getLastModified());
+						insert.addBatch();
+					} else if (isChanged(old, pack)) {
+						update.setString(1, pack.getName());
+						update.setString(2, pack.getSize());
+						update.setLong(3, pack.getSizeKBits());
+						update.setInt(4, pack.getEpisodeNumber());
+						update.setTimestamp(5, pack.getLastModified());
+						update.setInt(6, old.getId());
+						update.addBatch();
+					}
+				}
+
+				for (Pack old : dbPacks) {
+					if (!newNumbers.contains(old.getNumber())) {
+						delete.setInt(1, old.getId());
+						delete.addBatch();
+					}
+				}
+
+				delete.executeBatch();
+				insert.executeBatch();
+				update.executeBatch();
+			}
+		} catch (SQLException e) {
+			_myBot.getLogger().error("UpdatePackListDAO BotName: " + bot.getName(), e);
 		}
 	}
 
-	private void insertAndUpdateListFor(AbstractDistroBot bot) throws SQLException {
-		/*
-		int listSize = bot.getListing().size();
-		if( listSize == 0 ){
-			return;
-		}
-		
-		PreparedStatement pstmt = null;
-		try {
-			StringBuilder query = new StringBuilder();
-			query.append("INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, episode_number, last_modified) VALUES ");
-			query.append("(?,?,?,?,?,?) ");
-			query.append("ON DUPLICATE KEY UPDATE name=VALUES(`name`), size=VALUES(`size`), last_modified=VALUES(`last_modified`), episode_number=VALUES(`episode_number`)");
-			
-			pstmt = getConnection().prepareStatement(query.toString());
-			int counter = 0;
-			for(int i=0; i<listSize; i++) {
-				Pack pack = bot.getListing().get(i);
-				pstmt.setInt(1, pack.getBotId());
-				pstmt.setInt(2, pack.getNumber());
-				pstmt.setString(3, pack.getName());
-				pstmt.setString(4, pack.getSize());
-				pstmt.setInt(5, pack.getEpisodeNumber());
-				pstmt.setTimestamp(6, pack.getLastModified());
-				pstmt.addBatch();
-				counter++;
-				if( counter > 100  ){
-					pstmt.executeBatch();
-					counter = 0;
-				}
-			}
-		} catch(Exception e){
-			_logger.log(bot.getName() + " broke in insertAndUpdateListFor()");
-		}
-		
-		
-		pstmt.executeBatch();
-		pstmt.close();
-		*/
-		
-		int listSize = bot.getListing().size();
-		if( listSize == 0 ){
-			return;
-		}
-		
-		Statement stmt = getConnection().createStatement();
-		
-		int counter = 0;
-		StringBuilder sb = new StringBuilder();
-		sb.append("INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, sizekbits, episode_number, last_modified) VALUES ");
-		
-		for(int i=0; i<listSize; i++) {
-			Pack pack = bot.getListing().get(i);
-			// '' (doubled quote) is the portable SQL escape: valid in MySQL and H2, unlike \'
-			sb.append("(" + pack.getBotId() + "," + pack.getNumber() + ",'" + pack.getName().replace("'", "''") + "','" + pack.getSize() + "','" + pack.getSizeKBits() + "','" + pack.getEpisodeNumber() + "','" + pack.getLastModified() + "')");
-			counter++;
-			
-			if(counter>1000){
-				sb.append(" ON DUPLICATE KEY UPDATE name=VALUES(`name`), size=VALUES(`size`), last_modified=VALUES(`last_modified`)");
-				try{
-					
-					stmt.executeUpdate(sb.toString());
-				} catch(Exception e){
-					_myBot.getLogger().error(bot.getName() + " broke in insertAndUpdateListFor()", e);
-				}
-				sb = new StringBuilder();
-				sb.append("INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, sizekbits, episode_number, last_modified) VALUES ");
-				counter = 0;
-			} else {
-				if (i != listSize - 1) {
-					sb.append(",");
-				}
-			}
-		}
-		
-		if( counter > 0 ){
-			sb.append(" ON DUPLICATE KEY UPDATE name=VALUES(`name`), size=VALUES(`size`), last_modified=VALUES(`last_modified`);");
-			
-			try{
-				stmt.executeUpdate(sb.toString());
-			} catch(Exception e){
-				_myBot.getLogger().error(bot.getName() + " broke in insertAndUpdateListFor()", e);
-			}
-		}
-		
-		stmt.close();
-		
-		/*
-		int counter = 0;
-		StringBuilder sb = new StringBuilder();
-		sb.append("INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, episode_number, last_modified) VALUES ");
-		for (Pack pack : bot.getListing()) {
-			sb.append(",(" + pack.getBotId() + "," + pack.getNumber() + ",'" + pack.getName().replaceAll("'", Matcher.quoteReplacement("\\'")) + "','" + pack.getSize() + "','" + pack.getEpisodeNumber() + "','" + pack.getLastModified() + "')");
-			counter++;
-			if(counter>1000){
-				sb.append(" ON DUPLICATE KEY UPDATE name=VALUES(`name`), size=VALUES(`size`), last_modified=VALUES(`last_modified`);");
-				try{
-					stmt.executeUpdate(sb.toString().replaceFirst("VALUES ,", "VALUES "));
-				} catch(Exception e){
-					_logger.log(bot.getName() + " broke in insertAndUpdateListFor()");
-					_logger.log(sb.toString().replaceFirst("VALUES ,", "VALUES "));
-				}
-				sb = new StringBuilder();
-				sb.append("INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, last_modified) VALUES ");
-				counter = 0;
-			}
-		}
-		if(!sb.toString().equals("INSERT INTO " + _PACKS_TABLE + " (bot_id, number, name, size, episode_number, last_modified) VALUES ")){
-			sb.append(" ON DUPLICATE KEY UPDATE name=VALUES(`name`), size=VALUES(`size`), episode_number=VALUES(`episode_number`), last_modified=VALUES(`last_modified`);");
-			try{
-				stmt.executeUpdate(sb.toString().replaceFirst("VALUES ,", "VALUES "));
-			} catch(Exception e){
-				_logger.log(sb.toString().replaceFirst("VALUES ,", "VALUES "));
-				_logger.log(bot.getName() + " broke in insertAndUpdateListFor()");
-			}
-		}
-		stmt.close();*/
+	private static boolean isChanged(Pack old, Pack pack) {
+		return !old.getName().equals(pack.getName())
+				|| !old.getSize().equals(pack.getSize())
+				|| !old.getSizeKBits().equals(pack.getSizeKBits());
 	}
 
 	public void addNewBot(AbstractDistroBot bot) {
@@ -356,12 +291,12 @@ public class UpdatePackListDAO extends DataAccessObject {
 			pstmt.setTimestamp(6, new Timestamp(System.currentTimeMillis()));
 			pstmt.executeUpdate();
 			pstmt.close();
-			
+
 			pstmt = getConnection().prepareStatement("SELECT * FROM " + _BOTS_TABLE + " WHERE name = '" + bot.getName() + "';");
 			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()){
+			if (rs.next()) {
 				bot.setId(rs.getInt(1));
-			}else{
+			} else {
 				_myBot.getLogger().warn("Something went horribly wrong with addNewBot() for " + bot.getName());
 			}
 			rs.close();
@@ -383,7 +318,7 @@ public class UpdatePackListDAO extends DataAccessObject {
 			pstmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} 
+		}
 
 		return result;
 	}
@@ -403,7 +338,7 @@ public class UpdatePackListDAO extends DataAccessObject {
 		}
 		return result;
 	}
-	
+
 	public int updateBotInformative(int id, int inform) {
 		int result = 0;
 		PreparedStatement pstmt = null;
@@ -416,11 +351,11 @@ public class UpdatePackListDAO extends DataAccessObject {
 			pstmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} 
+		}
 
 		return result;
 	}
-	
+
 	public int updateBotBatch(int id, int batch) {
 		int result = 0;
 		PreparedStatement pstmt = null;
@@ -433,7 +368,7 @@ public class UpdatePackListDAO extends DataAccessObject {
 			pstmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
-		} 
+		}
 
 		return result;
 	}
@@ -448,7 +383,7 @@ public class UpdatePackListDAO extends DataAccessObject {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void deleteBot(String botName) {
 		Statement stmt = null;
 		try {
@@ -459,18 +394,17 @@ public class UpdatePackListDAO extends DataAccessObject {
 			e.printStackTrace();
 		}
 	}
-	
-	
+
 	/**
 	 * Set offline bots in database and memory
 	 * @param notBots
 	 */
-	public void setOfflineBots(HashSet<String> offBots){
-		try{
+	public void setOfflineBots(HashSet<String> offBots) {
+		try {
 			for (String botname : offBots) {
 				UpdatePackListFunctions.getBot(botname).setStatusId(0);
 			}
-		}catch(Exception e){
+		} catch (Exception e) {
 			_myBot.sendMessageFair("#" + _myBot.getProperty("admin_channel"), "setOfflineBots failed. Turning packlist module off.");
 		}
 	}
@@ -479,8 +413,8 @@ public class UpdatePackListDAO extends DataAccessObject {
 	 * Set online bots in database and memory
 	 * @param yesBots
 	 */
-	public void setBotsOffline(){
-		if(_updatePackList.getBotsMap().size()>0){
+	public void setBotsOffline() {
+		if (_updatePackList.getBotsMap().size() > 0) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("UPDATE `updatepacklist_bots` set status_id = 0");
 			try {
@@ -493,49 +427,46 @@ public class UpdatePackListDAO extends DataAccessObject {
 		}
 	}
 
-	public void handelLatestPacks(MessageEvent message){
-		if(!_updatePackList.isIterating()){
+	public void handelLatestPacks(MessageEvent message) {
+		if (!_updatePackList.isIterating()) {
 			UpdatePackListFunctions.getBot(message.getUser().getNick()).handleLatest();
 		}
 	}
 
-	public void showLatestPacksForDCC(SendChat session, String args) throws IOException{
-		
+	public void showLatestPacksForDCC(SendChat session, String args) throws IOException {
 		LatestPacksDAO latestPacksDAO = new LatestPacksDAO(_myBot);
 		int dispNumber = 10;
-		if(!args.equals("")){
+		if (!args.equals("")) {
 			dispNumber = Integer.parseInt(args);
 		}
 
 		LinkedList<Pack> corn = latestPacksDAO.getLatestPacks(dispNumber);
-		for(Pack pack : corn){
+		for (Pack pack : corn) {
 			session.sendLine(Colors.BROWN + "[" + Colors.TEAL + pack.getSize() + Colors.BROWN + "] " + Colors.DARK_GRAY + pack.getName() + Colors.NORMAL + "  /MSG " + pack.getBotName() + " XDCC SEND " + pack.getNumber());
 		}
 	}
-	
-	public UpdatePackList getUpdatePackList(){
+
+	public UpdatePackList getUpdatePackList() {
 		return _updatePackList;
 	}
-	
-	public void updateOwner(AbstractDistroBot bot, String botowner) throws SQLException{
+
+	public void updateOwner(AbstractDistroBot bot, String botowner) throws SQLException {
 		PreparedStatement stmt = null;
-			try {
-				
-				String query = "UPDATE updatepacklist_bots SET `owner` = ? WHERE id = ?";
-				stmt = getConnection().prepareStatement(query);
-				
-				stmt.setString(1, botowner);
-				stmt.setInt(2, bot.getId());
-				stmt.executeUpdate();
-				
-				bot.setOwner(botowner);
-				
-			} catch (SQLException e) {
-				_myBot.getLogger().error("SQL error in BotOwner updateOwner()", e);
-			} finally {
-				if( null != stmt ){
-					stmt.close();
-				}
+		try {
+			String query = "UPDATE updatepacklist_bots SET `owner` = ? WHERE id = ?";
+			stmt = getConnection().prepareStatement(query);
+
+			stmt.setString(1, botowner);
+			stmt.setInt(2, bot.getId());
+			stmt.executeUpdate();
+
+			bot.setOwner(botowner);
+		} catch (SQLException e) {
+			_myBot.getLogger().error("SQL error in BotOwner updateOwner()", e);
+		} finally {
+			if (null != stmt) {
+				stmt.close();
 			}
+		}
 	}
 }

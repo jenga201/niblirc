@@ -9,9 +9,9 @@ public class InputStreamConverter
 {
     public static RandomAccessFile toRandomAccessFile(InputStream is) throws IOException 
     {
-        RandomAccessFile raf = new RandomAccessFile(File.createTempFile("isc", "tmp"), "rwd");
+        RandomAccessFile raf = new RandomAccessFile(File.createTempFile("isc", "tmp"), "rw");
   
-        byte[] buffer = new byte[2048];
+        byte[] buffer = new byte[65536];
         int    tmp    = 0;
   
         while ((tmp = is.read(buffer)) != -1) 

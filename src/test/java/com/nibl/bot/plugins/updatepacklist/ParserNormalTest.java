@@ -84,4 +84,15 @@ class ParserNormalTest {
         assertEquals("Pack Seven", packs.get(6).getName());
         assertEquals((long) (20 * Math.pow(1024, 2)), packs.get(6).getSizeKBits());
     }
+
+    @Test
+    void decodesUtf8PackNames() throws Exception {
+        try (RandomAccessFile raf = TestFiles.fixtureAsRandomAccessFile("/fixtures/botlist-utf8.txt", tempDir)) {
+            List<Pack> packs = new ParserNormal().parse(distroBot, raf);
+
+            assertEquals(2, packs.size());
+            assertEquals("(その他) [安彦良和] 機動戦士ガンダム THE ORIGIN 公式ガイドブック.zip", packs.get(0).getName());
+            assertEquals("イリヤの空、UFOの夏 [1080p].mkv", packs.get(1).getName());
+        }
+    }
 }

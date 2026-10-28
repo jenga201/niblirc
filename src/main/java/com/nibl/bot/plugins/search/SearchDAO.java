@@ -195,20 +195,20 @@ public class SearchDAO extends DataAccessObject {
 	 * @return
 	 */
 	public String removeBrackets(String input){
-		String strippedSearchTerm = "";
+		StringBuilder strippedSearchTerm = new StringBuilder(input.length());
 		int open = 0;
 		for(char t : input.toCharArray()){
 			if(t=='[' || t=='('){
 				open++;
 			}
 			if(open<1){
-				strippedSearchTerm = strippedSearchTerm + t;
+				strippedSearchTerm.append(t);
 			}
 			if(t==']' || t==')'){
 				open--;
 			}
 		}
-		return strippedSearchTerm;
+		return strippedSearchTerm.toString();
 	}
 	
 	/**
