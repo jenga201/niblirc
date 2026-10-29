@@ -1,6 +1,7 @@
 package com.nibl.bot;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import com.nibl.bot.plugins.admin.AdminSession;
 import com.nibl.bot.plugins.admin.BotUser;
 import com.nibl.bot.service.ServiceFactory;
 import com.nibl.bot.util.BotProperties;
+import com.nibl.bot.util.HTTPGet;
 import com.nibl.bot.util.Logbook;
 
 public class Bot {
@@ -107,10 +109,15 @@ public class Bot {
 		}
 		cb.setDccPorts(dcc_ports);
 
-		try {
-			cb.setDccPublicAddress(InetAddress.getByName(this.getProperty("public_ip")));
-		} catch (UnknownHostException e) {
-			 this.getLogger().error("Unable to set DCC public address", e);
+		String publicIp = this.getProperty("public_ip");
+		if (publicIp != null && !publicIp.isBlank()) {
+			try {
+				cb.setDccPublicAddress(InetAddress.getByName(publicIp));
+			} catch (UnknownHostException e) {
+				this.getLogger().error("Unable to set DCC public address", e);
+			}
+		} else {
+			this.getLogger().warn("No public IP available; DCC transfer/chat address will not be advertised.");
 		}
 
         // Set channel information
@@ -133,6 +140,7 @@ public class Bot {
 
     public void loadEssentials() {
         this.properties = new BotProperties(this, this.configFile);
+        resolvePublicAddress();
 
         commandExecutor = Executors
                 .newFixedThreadPool(Integer.parseInt(this.properties.getProperty("bot_conc_request")));
@@ -146,6 +154,41 @@ public class Bot {
         daoFactory = new DAOFactory(this);
         serviceFactory = new ServiceFactory(this);
         commandFactory = new CommandFactory(this);
+    }
+
+    /**
+     * Ensures the DCC public address is set before IRC connects. When the
+     * configured value is blank, the current public IP is fetched from
+     * https://ifconfig.me/ip so the bot can advertise itself for DCC without a
+     * hardcoded IP. Failure is non-fatal: IRC still connects, DCC is skipped.
+     */
+    private void resolvePublicAddress() {
+        String publicIp = this.getProperty("public_ip");
+        if (publicIp != null && !publicIp.isBlank()) {
+            return;
+        }
+
+        String resolved = fetchPublicIp();
+        if (resolved != null && !resolved.isBlank()) {
+            this.setProperty("public_ip", resolved);
+            this.getLogger().info("Resolved public IP for DCC: " + resolved);
+        } else {
+            this.getLogger().warn("No public IP configured and ifconfig.me lookup failed; DCC will not be advertised.");
+        }
+    }
+
+    private String fetchPublicIp() {
+        HTTPGet httpGet = new HTTPGet(this);
+        try (RandomAccessFile in = httpGet.getURLData("https://ifconfig.me/ip")) {
+            if (in == null) {
+                return null;
+            }
+            String line = in.readLine();
+            return line == null ? null : line.trim();
+        } catch (IOException e) {
+            this.getLogger().warn("ifconfig.me public IP lookup failed: " + e.getMessage());
+            return null;
+        }
     }
 
     public PircBotX getBot() {

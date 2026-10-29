@@ -29,10 +29,12 @@ FLUSH PRIVILEGES;
 ## Run with Docker Compose
 Start the `niblmysql` stack first (see the `niblmysql` repo), then:
 ```
-cp .env.example .env   # set PUBLIC_DCC_IP
+cp .env.example .env   # set IRC_BOT_NAME, IRC_SERVER, IRC_PORT, IRC_DCC_PORTS, etc.
 docker compose up -d --build
 ```
 `config/` and `botlists/` are bind-mounted from the project directory (relative to the compose file) to `/config` and `/data/botlists`. Ports 46571-46573 are published for DCC.
+
+Configuration: IRC identity, server, DCC ports and database connection are provided as environment variables (mapped in `docker-compose.yml`); `config/config.txt` keeps only static, non-secret settings. The DCC public address (`public_ip`) is optional — left blank, the bot resolves it from `https://ifconfig.me/ip` at startup. Set `IRC_PUBLIC_IP` to pin it.
 
 ## Tests
 Unit tests (JUnit 5) run inside the Docker build stage and gate the image: if a test fails, the build fails and no new image is produced.
@@ -50,15 +52,27 @@ docker compose up -d    # reuses the existing image unless --build is given
 ## Run App (manual)
 The public IP is needed to enable dcc chat
 
-Only one range of ports is allowed for dcc chat and must match entries in config/config.txt (todo fix this)
+Only one range of ports is allowed for dcc chat and must match the `DCC_PORTS` environment value (todo fix this)
 
 ```
 docker run -d \
 --net='my-bridge' \
 --name=niblirc \
---add-host public_dcc_ip:{publicIp} \
 -p 46571-46573:46571-46573 \
+-e BOT_NAME=dockerizedBot \
+-e BOT_PASS=password \
+-e SERVER=irc.rizon.net \
+-e PORT=9999 \
+-e DCC_PORTS=46571,46572,46573 \
+-e DB=mysql \
+-e DB_USER=ooinuza \
+-e DB_PASS=niblempire \
+-e DB_SERVER=niblmysql \
+-e DB_PORT=3306 \
+-e DB_NAME=ooinuza \
 -v "$(pwd)/config":/config:rw \
 -v "$(pwd)/botlists":/data/botlists:rw \
 ooinuza
 ```
+
+The public IP is resolved automatically from ifconfig.me; pass `-e PUBLIC_IP={publicIp}` to pin it.

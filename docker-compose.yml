@@ -8,11 +8,19 @@ services:
     image: ooinuza
     container_name: ooinuza
     user: "0"
-    extra_hosts:
-      - "public_dcc_ip:${PUBLIC_DCC_IP:?Set PUBLIC_DCC_IP in .env}"
     environment:
-      DB_USER: ${MYSQL_BOT_USER:?Set MYSQL_BOT_USER in .env}
-      DB_PASS: ${MYSQL_BOT_PASSWORD:?Set MYSQL_BOT_PASSWORD in .env}
+      BOT_NAME: ${IRC_BOT_NAME:?Set IRC_BOT_NAME in .env}
+      BOT_PASS: ${IRC_BOT_PASS:-}
+      SERVER: ${IRC_SERVER:?Set IRC_SERVER in .env}
+      PORT: ${IRC_PORT:?Set IRC_PORT in .env}
+      DCC_PORTS: ${IRC_DCC_PORTS:?Set IRC_DCC_PORTS in .env}
+      PUBLIC_IP: ${IRC_PUBLIC_IP:-}
+      DB: ${IRC_DB:-mysql}
+      DB_USER: ${SQL_USER:?Set SQL_USER in .env}
+      DB_PASS: ${SQL_PASSWORD:?Set SQL_PASSWORD in .env}
+      DB_SERVER: ${SQL_HOST:-niblmysql}
+      DB_PORT: ${SQL_PORT:-3306}
+      DB_NAME: ${SQL_DATABASE:-ooinuza}
     ports:
       - "46571:46571"
       - "46572:46572"

@@ -1,12 +1,15 @@
 ###IRC###
+# Values for bot_name, bot_pass, server, port, public_ip and dcc_ports are
+# supplied via environment variables (see docker-compose.yml / .env.example)
+# and are intentionally left blank here.
 #name of the bot
-bot_name = dockerizedBot
+bot_name =
 #nickserv password
-bot_pass = password
+bot_pass =
 #servers to join space seperated
-server = irc.rizon.net
+server =
 #port
-port = 9999
+port =
 #ssl true/false (make sure port is good)
 ssl = true
 #channels to join no # space separated :passwords
@@ -24,13 +27,13 @@ dcc_timeout = 120000
 verbose = false
 #changes nick if already used
 auto_nick_change = true
-# Referenced by Docker --add-host
-public_ip = 47.199.82.19
-dcc_ports = 46571,46572,46573
+# DCC public address. Optional: left blank it is resolved from ifconfig.me at
+# startup; set OOINUZA_PUBLIC_IP (exposed as PUBLIC_IP) to pin it.
+public_ip =
+# DCC ports
+dcc_ports =
 
 ###BOT###
-# pass used to log in bot with dcc chat (admin)
-bot_auth = niblempire
 # accept dcc chat requests
 bot_dcc_chat_accept = false
 # number of request to handle at the same time
@@ -62,16 +65,19 @@ anidb_link = http://anidb.net/api/animetitles.xml.gz
 scheduler = start
 
 ###Database###
+# Values for db, db_user, db_pass, db_server, db_port and db_name are supplied
+# via environment variables (see docker-compose.yml / .env.example) and are
+# intentionally left blank here.
 # what database used mysql postgresql...
-db = mysql
+db =
 # user for database
-db_user = ooinuza
+db_user =
 # password for database
-db_pass = CHANGE_ME
+db_pass =
 # server
-db_server = niblmysql
+db_server =
 #db_server = 127.0.0.1
 # port
-db_port = 3306
+db_port =
 # name of database
-db_name = ooinuza
+db_name =

@@ -21,8 +21,6 @@ verbose =
 #changes nick if already used
 auto_nick_change =
 ###BOT###
-# pass used to log in bot with dcc chat (admin)
-bot_auth =
 # accept dcc chat requests. usually you want false but my fucking port is blocked
 bot_dcc_chat_accept =
 # number of request to handle at the same time
